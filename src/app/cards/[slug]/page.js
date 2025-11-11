@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
 
-// Card Detail Component
+// Card Detail Component (keep this the same)
 function ProjectDetail({ project, onClose }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -151,8 +151,8 @@ function ProjectDetail({ project, onClose }) {
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="font-semibold text-gray-800 mb-2">Project Summary</h3>
             <p className="text-sm text-gray-600">
-              {project.name} is a {project.sector.toLowerCase()} project in {project.country} with a budget of ${project.budget?.toLocaleString()}. 
-              The project is currently {project.status.toLowerCase()} and led by {project.lead}.
+              {project.name} is a {project.sector?.toLowerCase()} project in {project.country} with a budget of ${project.budget?.toLocaleString()}. 
+              The project is currently {project.status?.toLowerCase()} and led by {project.lead}.
             </p>
           </div>
         </div>
@@ -164,25 +164,22 @@ function ProjectDetail({ project, onClose }) {
 export default function CardComponent() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null) // Properly define error state
   const [selectedProject, setSelectedProject] = useState(null)
   const params = useParams()
   const router = useRouter()
   const sheetName = params.slug
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData =  () => {
       try {
         setLoading(true)
         setError(null)
-        console.log(`Fetching from: /data/${sheetName}.json`) // Debug log
-        
-        const response = await axios.get(`/data/${sheetName}.json`)
-        console.log('Data received:', response.data) // Debug log
-        
+        const response =  axios.get(`/data/${sheetName}.json`)
         setData(response.data)
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        setError(`Failed to load data: ${error.message}`)
+      } catch (err) { // Use 'err' instead of 'error' q
+        console.error('Error fetching data:', err)
+        setError(`Failed to load data: ${err.message}`)
         setData(null)
       } finally {
         setLoading(false)
@@ -194,26 +191,6 @@ export default function CardComponent() {
     }
   }, [sheetName])
 
-  // Add error display in your JSX
-  if (error) {
-    return (
-      <div className="p-8">
-        <Navbar />
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-red-600">
-            Error: {error}
-            <br />
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
   const handleBack = () => {
     router.back()
   }
@@ -263,6 +240,27 @@ export default function CardComponent() {
     active: projects.filter(p => p.leadStatus === 'Active').length,
     pending: projects.filter(p => p.leadStatus === 'Pending').length,
     totalBudget: projects.reduce((sum, p) => sum + (p.budget || 0), 0)
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-8">
+        <Navbar />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg text-red-600">
+            {error}
+            <br />
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {

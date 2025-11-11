@@ -173,10 +173,16 @@ export default function CardComponent() {
     const fetchData = async () => {
       try {
         setLoading(true)
+        setError(null)
+        console.log(`Fetching from: /data/${sheetName}.json`) // Debug log
+        
         const response = await axios.get(`/data/${sheetName}.json`)
+        console.log('Data received:', response.data) // Debug log
+        
         setData(response.data)
       } catch (error) {
         console.error('Error fetching data:', error)
+        setError(`Failed to load data: ${error.message}`)
         setData(null)
       } finally {
         setLoading(false)
@@ -188,6 +194,26 @@ export default function CardComponent() {
     }
   }, [sheetName])
 
+  // Add error display in your JSX
+  if (error) {
+    return (
+      <div className="p-8">
+        <Navbar />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg text-red-600">
+            Error: {error}
+            <br />
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
   const handleBack = () => {
     router.back()
   }

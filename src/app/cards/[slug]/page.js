@@ -5,8 +5,16 @@ import { useParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
 
-// Card Detail Component (keep this the same)
+// Card Detail Component
 function ProjectDetail({ project, onClose }) {
+  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false)
+
+  useEffect(() => {
+    if (project.deadline) {
+      setIsDeadlinePassed(new Date(project.deadline) < new Date())
+    }
+  }, [project.deadline])
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -64,11 +72,7 @@ function ProjectDetail({ project, onClose }) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Deadline:</span>
-                  <span className={`font-medium ${
-                    new Date(project.deadline) < new Date() 
-                      ? 'text-red-600'
-                      : 'text-gray-800'
-                  }`}>
+                  <span className={`font-medium ${isDeadlinePassed ? 'text-red-600' : 'text-gray-800'}`}>
                     {project.deadline}
                   </span>
                 </div>
@@ -113,7 +117,9 @@ function ProjectDetail({ project, onClose }) {
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     project.leadStatus === 'Active' 
                       ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
+                      : project.leadStatus === 'Pending'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-gray-100 text-gray-800'
                   }`}>
                     {project.leadStatus}
                   </span>
@@ -161,23 +167,117 @@ function ProjectDetail({ project, onClose }) {
   )
 }
 
+// Project Card Component
+function ProjectCard({ project, onClick }) {
+  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false)
+
+  useEffect(() => {
+    if (project.deadline) {
+      setIsDeadlinePassed(new Date(project.deadline) < new Date())
+    }
+  }, [project.deadline])
+
+  return (
+    <div 
+      onClick={() => onClick(project)}
+      className="border border-gray-200 rounded-lg p-5 hover:shadow-lg transition-all duration-200 bg-white cursor-pointer transform hover:-translate-y-1"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <h4 className="font-bold text-gray-800 text-lg leading-tight">
+            {project.name}
+          </h4>
+          <p className="text-sm text-gray-600 mt-1">{project.projectCode}</p>
+        </div>
+        <span className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-medium text-blue-800">
+          {project.id}
+        </span>
+      </div>
+
+      {/* Basic Info */}
+      <div className="space-y-3 mb-4">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Country</span>
+          <span className="font-medium text-gray-800">{project.country}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Sector</span>
+          <span className="font-medium text-gray-800">{project.sector}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Donor</span>
+          <span className="font-medium text-gray-800 text-sm">{project.donor}</span>
+        </div>
+      </div>
+
+      {/* Status & Budget */}
+      <div className="border-t border-gray-100 pt-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Deadline</span>
+          <span className={`text-sm font-medium ${isDeadlinePassed ? 'text-red-600' : 'text-gray-800'}`}>
+            {project.deadline}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Budget</span>
+          <span className="text-sm font-medium text-green-600">
+            ${project.budget?.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Status</span>
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+            project.leadStatus === 'Active' 
+              ? 'bg-green-100 text-green-800'
+              : project.leadStatus === 'Pending'
+              ? 'bg-yellow-100 text-yellow-800'
+              : 'bg-gray-100 text-gray-800'
+          }`}>
+            {project.leadStatus}
+          </span>
+        </div>
+      </div>
+
+      {/* Challenges & Comments Preview */}
+      {(project.challenges || project.comments) && (
+        <div className="border-t border-gray-100 pt-3 mt-3">
+          {project.challenges && (
+            <div className="text-xs text-red-600 mb-1 truncate">
+              <strong>Challenge:</strong> {project.challenges}
+            </div>
+          )}
+          {project.comments && (
+            <div className="text-xs text-blue-600 truncate">
+              <strong>Comment:</strong> {project.comments}
+            </div>
+          )}
+          <div className="text-xs text-gray-500 mt-2 text-center">
+            Click to view full details
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function CardComponent() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null) // Properly define error state
+  const [error, setError] = useState(null)
   const [selectedProject, setSelectedProject] = useState(null)
   const params = useParams()
   const router = useRouter()
   const sheetName = params.slug
 
   useEffect(() => {
-    const fetchData =  () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
         setError(null)
-        const response =  axios.get(`/data/${sheetName}.json`)
+        const response = await axios.get(`/data/${sheetName}.json`)
         setData(response.data)
-      } catch (err) { // Use 'err' instead of 'error' q
+      } catch (err) {
         console.error('Error fetching data:', err)
         setError(`Failed to load data: ${err.message}`)
         setData(null)
@@ -209,23 +309,23 @@ export default function CardComponent() {
     
     if (Array.isArray(data)) {
       return data.map(item => ({
-        id: item.sl,
-        name: item["Project Name"],
-        deadline: item["Confirmation Deadline"],
-        country: item.Country,
-        donor: item["Donor Name"],
-        client: item["Client Name"],
-        sector: item.Sector,
-        lead: item.Lead,
-        leadStatus: item["Lead Status"],
-        partner: item.Partner,
-        status: item.Status,
-        projectCode: item["Project Code"],
-        budget: item["Assigned To Budget"],
-        duration: item.Duration,
-        process: item.Process,
-        challenges: item.challanges,
-        comments: item.Coments
+        id: item.sl || item.id || 'N/A',
+        name: item["Project Name"] || item["Project name"] || item.projectName || 'Unnamed Project',
+        deadline: item["Confirmation Deadline"] || item.Deadline || item.deadline || 'No deadline',
+        country: item.Country || item.country || 'Unknown',
+        donor: item["Donor Name"] || item.Donor || item.donor || 'Unknown donor',
+        client: item["Client Name"] || item.Client || item.client || 'Unknown client',
+        sector: item.Sector || item.sector || 'General',
+        lead: item.Lead || item.lead || 'Unassigned',
+        leadStatus: item["Lead Status"] || item.Status || item.status || 'Unknown',
+        partner: item.Partner || item.partner || 'No partner',
+        status: item.Status || item.status || item["Project Status"] || 'Unknown',
+        projectCode: item["Project Code"] || item.Code || item.code || 'N/A',
+        budget: parseFloat(item["Assigned To Budget"] || item.Budget || item.budget || 0),
+        duration: item.Duration || item.duration || 'Not specified',
+        process: item.Process || item.process || 'Not specified',
+        challenges: item.challanges || item.Challenges || item.challenges || '',
+        comments: item.Coments || item.Comments || item.comments || ''
       }))
     }
     
@@ -237,25 +337,36 @@ export default function CardComponent() {
   // Calculate statistics
   const stats = {
     total: projects.length,
-    active: projects.filter(p => p.leadStatus === 'Active').length,
-    pending: projects.filter(p => p.leadStatus === 'Pending').length,
+    active: projects.filter(p => p.leadStatus?.toLowerCase().includes('active')).length,
+    pending: projects.filter(p => p.leadStatus?.toLowerCase().includes('pending')).length,
     totalBudget: projects.reduce((sum, p) => sum + (p.budget || 0), 0)
   }
 
-  // Show error state
   if (error) {
     return (
-      <div className="p-8">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-red-600">
-            {error}
-            <br />
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <button
+            onClick={handleBack}
+            className="mb-6 px-4 py-2 flex items-center text-blue-500 hover:text-blue-700 transition-colors"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Dashboard
+          </button>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <svg className="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <h3 className="text-lg font-medium text-red-800 mb-2">Error Loading Data</h3>
+            <p className="text-red-600">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
             >
-              Retry
+              Try Again
             </button>
           </div>
         </div>
@@ -265,39 +376,51 @@ export default function CardComponent() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading Projects...</div>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <button
+            onClick={handleBack}
+            className="mb-6 px-4 py-2 flex items-center text-blue-500 hover:text-blue-700 transition-colors"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Dashboard
+          </button>
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg text-gray-600">Loading {sheetName} data...</div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      {/* Back Button */}
-      <button
-        onClick={handleBack}
-        className="my-10 px-4 flex items-center text-blue-500 hover:text-blue-700 transition-colors"
-      >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to Sheets
-      </button>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Back Button */}
+        <button
+          onClick={handleBack}
+          className="mb-6 px-4 py-2 flex items-center text-blue-500 hover:text-blue-700 transition-colors"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </button>
 
-      {/* Card Details */}
-      <div className="max-w-7xl mx-auto">
+        {/* Card Details */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           {/* Header */}
-          <div className="flex items-center justify-center mb-6">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold capitalize text-gray-800">
-                {sheetName} 
+                {sheetName?.replace(/([A-Z])/g, ' $1')} 
               </h1>
+              <p className="text-gray-600 mt-1">Project Data Overview</p>
             </div>
           </div>
 
@@ -317,7 +440,7 @@ export default function CardComponent() {
             </div>
             <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
               <div className="text-2xl font-bold text-purple-800">
-                ${(stats.totalBudget / 1000).toFixed(0)}K
+                ${(stats.totalBudget / 1000000).toFixed(1)}M
               </div>
               <div className="text-sm text-purple-600">Total Budget</div>
             </div>
@@ -326,95 +449,14 @@ export default function CardComponent() {
           {/* Projects List */}
           {projects.length > 0 ? (
             <div className="mt-6">
-              {/* Projects Grid View */}
-              <div className="mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {projects.map((project) => (
-                    <div 
-                      key={project.id} 
-                      onClick={() => handleCardClick(project)}
-                      className="border border-gray-200 rounded-lg p-5 hover:shadow-lg transition-all duration-200 bg-white cursor-pointer transform hover:-translate-y-1"
-                    >
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-bold text-gray-800 text-lg leading-tight">
-                            {project.name}
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-1">{project.projectCode}</p>
-                        </div>
-                        <span className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-medium text-blue-800">
-                          {project.id}
-                        </span>
-                      </div>
-
-                      {/* Basic Info */}
-                      <div className="space-y-3 mb-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Country</span>
-                          <span className="font-medium text-gray-800">{project.country}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Sector</span>
-                          <span className="font-medium text-gray-800">{project.sector}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Donor</span>
-                          <span className="font-medium text-gray-800 text-sm">{project.donor}</span>
-                        </div>
-                      </div>
-
-                      {/* Status & Budget */}
-                      <div className="border-t border-gray-100 pt-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Deadline</span>
-                          <span className={`text-sm font-medium ${
-                            new Date(project.deadline) < new Date() 
-                              ? 'text-red-600'
-                              : 'text-gray-800'
-                          }`}>
-                            {project.deadline}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Budget</span>
-                          <span className="text-sm font-medium text-green-600">
-                            ${project.budget?.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Status</span>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            project.leadStatus === 'Active' 
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {project.leadStatus}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Challenges & Comments Preview */}
-                      {(project.challenges || project.comments) && (
-                        <div className="border-t border-gray-100 pt-3 mt-3">
-                          {project.challenges && (
-                            <div className="text-xs text-red-600 mb-1 truncate">
-                              <strong>Challenge:</strong> {project.challenges}
-                            </div>
-                          )}
-                          {project.comments && (
-                            <div className="text-xs text-blue-600 truncate">
-                              <strong>Comment:</strong> {project.comments}
-                            </div>
-                          )}
-                          <div className="text-xs text-gray-500 mt-2 text-center">
-                            Click to view full details
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {projects.map((project) => (
+                  <ProjectCard 
+                    key={project.id} 
+                    project={project} 
+                    onClick={handleCardClick}
+                  />
+                ))}
               </div>
             </div>
           ) : (
@@ -423,10 +465,9 @@ export default function CardComponent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="text-lg mb-2">No projects found</p>
-              <p className="text-sm">The data doesn't contain any project information</p>
+              <p className="text-sm">No project data available in this sheet</p>
             </div>
           )}
-
         </div>
       </div>
 
@@ -437,7 +478,7 @@ export default function CardComponent() {
           onClose={handleCloseDetail} 
         />
       )}
-      <Footer></Footer>
+      <Footer />
     </div>
   )
 }

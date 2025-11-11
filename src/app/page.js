@@ -1,58 +1,27 @@
+
 'use client'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
-import Head from 'next/head'
 
 export default function Home() {
   const [data, setData] = useState(null)
-  const [sheetPaths, setSheetPaths] = useState([
-    '/data/sheet1.json',
-    '/data/sheet2.json',
-    '/data/sheet3.json',
-    '/data/sheet4.json'
-  ])
   const router = useRouter()
   
-  // Extract sheet names from paths
-  const sheets = sheetPaths.map(path => {
-    const fileName = path.split('/').pop()
-    return fileName?.replace('.json', '') || ''
-  })
+  // Use the actual sheet names that match your JSON files
+  const sheets = ['sheet1', 'sheet2', 'sheet3', 'sheet4']
   
-  const [activeSheet, setActiveSheet] = useState(sheets[0] || 'users')
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(`/data/${activeSheet}.json`)
-        setData(response.data)
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        setData(null)
-      }
-    }
-
-    if (activeSheet) {
-      fetchData()
-    }
-  }, [activeSheet])
-
   const handleCardClick = (sheet) => {
     router.push(`/cards/${sheet}`)
   }
 
-  // Format sheet name for display
   const formatSheetName = (name) => {
     return name.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
   }
 
   return (
-    <>
-
-  
     <div className="min-h-screen bg-gray-50">
       <Navbar/>
       
@@ -124,7 +93,7 @@ export default function Home() {
               <div className="flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-gray-100">
                 <span>Click to explore</span>
                 <span className="bg-gray-100 px-2 py-1 rounded-full">
-                  {sheet.replace('sheet', 'Sheet ')}
+                  {sheet}
                 </span>
               </div>
             </div>
@@ -141,6 +110,5 @@ export default function Home() {
 
       <Footer></Footer>
     </div>
-      </>
   )
 }

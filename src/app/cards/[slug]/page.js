@@ -1315,7 +1315,6 @@ export default function CardComponent() {
           console.log('Using fallback data for:', sheetName)
           setData(fallbackData[sheetName])
           setUsingFallback(true)
-          setError(`Note: Using sample data. To use your own data, create public/data/${sheetName}.json`)
         } else {
           setError(`Data not found for "${sheetName}". Please create public/data/${sheetName}.json file.`)
           setData([])

@@ -261,6 +261,25 @@ function ProjectCard({ project, onClick }) {
   )
 }
 
+// Retry mechanism function
+const fetchWithRetry = async (url, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await axios.get(url, {
+        timeout: 10000,
+        validateStatus: function (status) {
+          return status >= 200 && status < 300
+        }
+      })
+      return response.data
+    } catch (err) {
+      if (i === retries - 1) throw err
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
+    }
+  }
+}
+
 export default function CardComponent() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -275,11 +294,21 @@ export default function CardComponent() {
       try {
         setLoading(true)
         setError(null)
-        const response = await axios.get(`/data/${sheetName}.json`)
-        setData(response.data)
+        
+        // Use absolute URL for production, relative for development
+        const baseUrl = process.env.NODE_ENV === 'production' 
+          ? 'https://msl-dashboard.vercel.app'
+          : ''
+        
+        const url = `${baseUrl}/data/${sheetName}.json`
+        console.log('Fetching data from:', url)
+        
+        const responseData = await fetchWithRetry(url)
+        setData(responseData)
+        
       } catch (err) {
         console.error('Error fetching data:', err)
-        setError(`Failed to load data: ${err.message}`)
+        setError(`Failed to load data for "${sheetName}". Please check if the data file exists. Error: ${err.message}`)
         setData(null)
       } finally {
         setLoading(false)
@@ -288,6 +317,9 @@ export default function CardComponent() {
 
     if (sheetName) {
       fetchData()
+    } else {
+      setError('No sheet name provided')
+      setLoading(false)
     }
   }, [sheetName])
 
@@ -361,15 +393,33 @@ export default function CardComponent() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
             <h3 className="text-lg font-medium text-red-800 mb-2">Error Loading Data</h3>
-            <p className="text-red-600">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
+            <p className="text-red-600 mb-4">{error}</p>
+            <div className="space-y-3 text-sm text-red-700 text-left bg-red-100 p-4 rounded-lg">
+              <p><strong>Possible solutions:</strong></p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Check if the JSON file exists at: <code>public/data/{sheetName}.json</code></li>
+                <li>Verify the file name matches the sheet name exactly</li>
+                <li>Ensure the JSON file contains valid data</li>
+                <li>Check your internet connection</li>
+              </ul>
+            </div>
+            <div className="mt-6 space-x-4">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={handleBack}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+              >
+                Go Back
+              </button>
+            </div>
           </div>
         </div>
+        <Footer />
       </div>
     )
   }
@@ -388,10 +438,13 @@ export default function CardComponent() {
             </svg>
             Back to Dashboard
           </button>
-          <div className="flex justify-center items-center h-64">
+          <div className="flex flex-col justify-center items-center h-64 space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             <div className="text-lg text-gray-600">Loading {sheetName} data...</div>
+            <div className="text-sm text-gray-500">Fetching from: /data/{sheetName}.json</div>
           </div>
         </div>
+        <Footer />
       </div>
     )
   }
@@ -421,6 +474,7 @@ export default function CardComponent() {
                 {sheetName?.replace(/([A-Z])/g, ' $1')} 
               </h1>
               <p className="text-gray-600 mt-1">Project Data Overview</p>
+              <p className="text-sm text-gray-500">Data source: /data/{sheetName}.json</p>
             </div>
           </div>
 
@@ -450,13 +504,16 @@ export default function CardComponent() {
           {projects.length > 0 ? (
             <div className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {projects.map((project) => (
+                {projects.map((project, index) => (
                   <ProjectCard 
-                    key={project.id} 
+                    key={project.id || index} 
                     project={project} 
                     onClick={handleCardClick}
                   />
                 ))}
+              </div>
+              <div className="mt-6 text-center text-sm text-gray-500">
+                Showing {projects.length} projects • Click on any card to view details
               </div>
             </div>
           ) : (
@@ -465,7 +522,13 @@ export default function CardComponent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="text-lg mb-2">No projects found</p>
-              <p className="text-sm">No project data available in this sheet</p>
+              <p className="text-sm">No project data available in {sheetName}.json</p>
+              <button
+                onClick={handleBack}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                Back to Dashboard
+              </button>
             </div>
           )}
         </div>

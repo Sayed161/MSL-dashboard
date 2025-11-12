@@ -1,1199 +1,408 @@
-'use client'
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-import { useParams, useRouter } from 'next/navigation'
-import Navbar from '@/components/navbar'
-import Footer from '@/components/footer'
+"use client";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Navbar from "@/components/navbar";
+import Footer from "@/components/footer";
 
-// Fallback data in case JSON files are missing
-const fallbackData = {
-  sheet1: [
-  {
-    "sl": 1,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "World Bank",
-    "Client Name": "Ministry of Education",
-    "Project Name": "Digital Learning for All",
-    "Sector": "Education",
-    "Lead": "Sheikh Rahman",
-    "Lead Status": "Active",
-    "Partner": "TechVision Ltd",
-    "Confirmation Deadline": "2024-05-20",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "EDU-2401",
-    "Assigned To Budget": 600000,
-    "Duration": "12 months",
-    "Clarification Deadline": "2024-05-10",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Delay in hardware shipment",
-    "Coments": "Implementation 30% completed"
-  },
-  {
-    "sl": 2,
-    "Year": 2024,
-    "Country": "India",
-    "Donor Name": "UNDP",
-    "Client Name": "Ministry of Health",
-    "Project Name": "Rural Health Support",
-    "Sector": "Health",
-    "Lead": "Anita Das",
-    "Lead Status": "Active",
-    "Partner": "MediServe Pvt Ltd",
-    "Confirmation Deadline": "2024-07-01",
-    "Process": "Proposal",
-    "Status": "Submitted",
-    "Project Code": "HLT-2402",
-    "Assigned To Budget": 800000,
-    "Duration": "18 months",
-    "Clarification Deadline": "2024-06-25",
-    "Selection method Submission Prep (RFP)": "Closed Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Cleared",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Shortage of field staff",
-    "Coments": "Strong donor interest"
-  },
-  {
-    "sl": 3,
-    "Year": 2024,
-    "Country": "Nepal",
-    "Donor Name": "ADB",
-    "Client Name": "Nepal Education Board",
-    "Project Name": "eSchool Initiative",
-    "Sector": "Education",
-    "Lead": "Rohit Lama",
-    "Lead Status": "Pending",
-    "Partner": "BrightLearn Pvt Ltd",
-    "Confirmation Deadline": "2024-09-15",
-    "Process": "Proposal",
-    "Status": "Under Review",
-    "Project Code": "EDU-2403",
-    "Assigned To Budget": 500000,
-    "Duration": "10 months",
-    "Clarification Deadline": "2024-09-05",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Submitted",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Connectivity issues in rural areas",
-    "Coments": "Waiting for donor evaluation"
-  },
-  {
-    "sl": 4,
-    "Year": 2024,
-    "Country": "Pakistan",
-    "Donor Name": "WHO",
-    "Client Name": "Health Department",
-    "Project Name": "Immunization Drive 2024",
-    "Sector": "Health",
-    "Lead": "Saima Rauf",
-    "Lead Status": "Active",
-    "Partner": "CareHealth Pvt",
-    "Confirmation Deadline": "2024-03-10",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "HLT-2404",
-    "Assigned To Budget": 400000,
-    "Duration": "9 months",
-    "Clarification Deadline": "2024-03-05",
-    "Selection method Submission Prep (RFP)": "Restricted Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Cold storage logistics",
-    "Coments": "Good team performance"
-  },
-  {
-    "sl": 5,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "UNICEF",
-    "Client Name": "Ministry of Primary Education",
-    "Project Name": "School Nutrition Improvement",
-    "Sector": "Education",
-    "Lead": "Tasnim Hossain",
-    "Lead Status": "Active",
-    "Partner": "FoodCare BD",
-    "Confirmation Deadline": "2024-10-01",
-    "Process": "Proposal",
-    "Status": "Awarded",
-    "Project Code": "EDU-2405",
-    "Assigned To Budget": 350000,
-    "Duration": "11 months",
-    "Clarification Deadline": "2024-09-25",
-    "Selection method Submission Prep (RFP)": "Direct Selection",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "High food prices",
-    "Coments": "Need donor extension"
-  },
-  {
-    "sl": 6,
-    "Year": 2024,
-    "Country": "Sri Lanka",
-    "Donor Name": "UNESCO",
-    "Client Name": "Education Council",
-    "Project Name": "Teacher Training Upgrade",
-    "Sector": "Education",
-    "Lead": "Kavya Perera",
-    "Lead Status": "Pending",
-    "Partner": "SkillBoost Solutions",
-    "Confirmation Deadline": "2024-08-10",
-    "Process": "Proposal",
-    "Status": "Submitted",
-    "Project Code": "EDU-2406",
-    "Assigned To Budget": 450000,
-    "Duration": "8 months",
-    "Clarification Deadline": "2024-08-05",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Training location unconfirmed",
-    "Coments": "Will finalize after budget approval"
-  },
-  {
-    "sl": 7,
-    "Year": 2024,
-    "Country": "Nepal",
-    "Donor Name": "Save the Children",
-    "Client Name": "Education Trust Nepal",
-    "Project Name": "Child Learning Enhancement",
-    "Sector": "Education",
-    "Lead": "Rina Tamang",
-    "Lead Status": "Active",
-    "Partner": "NextGen Nepal",
-    "Confirmation Deadline": "2024-07-20",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "EDU-2407",
-    "Assigned To Budget": 300000,
-    "Duration": "12 months",
-    "Clarification Deadline": "2024-07-15",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Transport issues",
-    "Coments": "Smooth field operation"
-  },
-  {
-    "sl": 8,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "DFID",
-    "Client Name": "Technical Education Board",
-    "Project Name": "Vocational Skills Boost",
-    "Sector": "Education",
-    "Lead": "Farhan Alam",
-    "Lead Status": "Active",
-    "Partner": "SkillBridge BD",
-    "Confirmation Deadline": "2024-09-05",
-    "Process": "Proposal",
-    "Status": "Under Review",
-    "Project Code": "EDU-2408",
-    "Assigned To Budget": 700000,
-    "Duration": "15 months",
-    "Clarification Deadline": "2024-08-30",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Submitted",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Slow approval process",
-    "Coments": "Awaiting fund release"
-  },
-  {
-    "sl": 9,
-    "Year": 2024,
-    "Country": "India",
-    "Donor Name": "World Bank",
-    "Client Name": "State Education Board",
-    "Project Name": "Smart Classroom Project",
-    "Sector": "Education",
-    "Lead": "Ravi Kumar",
-    "Lead Status": "Active",
-    "Partner": "EduSmart Pvt Ltd",
-    "Confirmation Deadline": "2024-06-10",
-    "Process": "Bidding",
-    "Status": "Awarded",
-    "Project Code": "EDU-2409",
-    "Assigned To Budget": 950000,
-    "Duration": "20 months",
-    "Clarification Deadline": "2024-05-30",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Software license issues",
-    "Coments": "Phase 1 started"
-  },
-  {
-    "sl": 10,
-    "Year": 2024,
-    "Country": "Pakistan",
-    "Donor Name": "UNESCO",
-    "Client Name": "Ministry of Education",
-    "Project Name": "Digital Literacy for Girls",
-    "Sector": "Education",
-    "Lead": "Sadia Khan",
-    "Lead Status": "Pending",
-    "Partner": "Learn4All Ltd",
-    "Confirmation Deadline": "2024-11-10",
-    "Process": "Proposal",
-    "Status": "Submitted",
-    "Project Code": "EDU-2410",
-    "Assigned To Budget": 250000,
-    "Duration": "6 months",
-    "Clarification Deadline": "2024-10-25",
-    "Selection method Submission Prep (RFP)": "Direct Selection",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Delayed response from client",
-    "Coments": "Follow-up scheduled next week"
-  }
-]
-,
-  sheet2: [
-  {
-    "sl": 1,
-    "Year": 2025,
-    "Country": "Bangladesh",
-    "Donor Name": "Asian Development Bank",
-    "Client Name": "Road Transport Authority",
-    "Project Name": "Dhaka–Chittagong Highway Expansion",
-    "Sector": "Infrastructure",
-    "Lead": "Tanvir Hossain",
-    "Lead Status": "Active",
-    "Partner": "BuildRight Ltd",
-    "Confirmation Deadline": "2025-04-30",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "INF-2501",
-    "Assigned To Budget": 2400000,
-    "Duration": "30 months",
-    "Clarification Deadline": "2025-04-15",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Monsoon construction delays",
-    "Coments": "Progress at 40%"
-  },
-  {
-    "sl": 2,
-    "Year": 2025,
-    "Country": "India",
-    "Donor Name": "World Bank",
-    "Client Name": "Energy Board of India",
-    "Project Name": "Solar Park Development Phase III",
-    "Sector": "Energy",
-    "Lead": "Ravi Kumar",
-    "Lead Status": "Active",
-    "Partner": "SunPower Solutions",
-    "Confirmation Deadline": "2025-03-25",
-    "Process": "Proposal",
-    "Status": "Awarded",
-    "Project Code": "ENG-2502",
-    "Assigned To Budget": 1800000,
-    "Duration": "24 months",
-    "Clarification Deadline": "2025-03-15",
-    "Selection method Submission Prep (RFP)": "Competitive Bidding",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Equipment import delays",
-    "Coments": "Funding cleared"
-  },
-  {
-    "sl": 3,
-    "Year": 2025,
-    "Country": "Nepal",
-    "Donor Name": "JICA",
-    "Client Name": "Ministry of Transport",
-    "Project Name": "Mountain Tunnel Development",
-    "Sector": "Infrastructure",
-    "Lead": "Rohit Lama",
-    "Lead Status": "Pending",
-    "Partner": "GeoBuild Corp",
-    "Confirmation Deadline": "2025-06-15",
-    "Process": "Proposal",
-    "Status": "Submitted",
-    "Project Code": "INF-2503",
-    "Assigned To Budget": 1300000,
-    "Duration": "28 months",
-    "Clarification Deadline": "2025-06-10",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Submitted",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Terrain and landslide risks",
-    "Coments": "Awaiting environmental clearance"
-  },
-  {
-    "sl": 4,
-    "Year": 2025,
-    "Country": "Sri Lanka",
-    "Donor Name": "UNDP",
-    "Client Name": "Urban Development Authority",
-    "Project Name": "Colombo Water Supply Upgrade",
-    "Sector": "Infrastructure",
-    "Lead": "Kavya Perera",
-    "Lead Status": "Active",
-    "Partner": "HydroWorks Ltd",
-    "Confirmation Deadline": "2025-05-20",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "INF-2504",
-    "Assigned To Budget": 950000,
-    "Duration": "18 months",
-    "Clarification Deadline": "2025-05-10",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Water pipeline sourcing issues",
-    "Coments": "Phase 1 completed"
-  },
-  {
-    "sl": 5,
-    "Year": 2025,
-    "Country": "Pakistan",
-    "Donor Name": "World Bank",
-    "Client Name": "Energy Department",
-    "Project Name": "Wind Power Expansion",
-    "Sector": "Energy",
-    "Lead": "Sadia Khan",
-    "Lead Status": "Pending",
-    "Partner": "WindTech Solutions",
-    "Confirmation Deadline": "2025-07-05",
-    "Process": "Proposal",
-    "Status": "Under Review",
-    "Project Code": "ENG-2505",
-    "Assigned To Budget": 2000000,
-    "Duration": "26 months",
-    "Clarification Deadline": "2025-06-25",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "High maintenance cost",
-    "Coments": "Requires technical review"
-  },
-  {
-    "sl": 6,
-    "Year": 2025,
-    "Country": "Bangladesh",
-    "Donor Name": "UN ESCAP",
-    "Client Name": "Power Grid Company of Bangladesh",
-    "Project Name": "Smart Grid Infrastructure Upgrade",
-    "Sector": "Energy",
-    "Lead": "Shakil Ahmed",
-    "Lead Status": "Active",
-    "Partner": "GridLink Ltd",
-    "Confirmation Deadline": "2025-09-10",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "ENG-2506",
-    "Assigned To Budget": 1500000,
-    "Duration": "22 months",
-    "Clarification Deadline": "2025-09-01",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Supply-chain disruption",
-    "Coments": "Phase 2 starting soon"
-  },
-  {
-    "sl": 7,
-    "Year": 2025,
-    "Country": "India",
-    "Donor Name": "ADB",
-    "Client Name": "Transport Department",
-    "Project Name": "Electric Bus Fleet Deployment",
-    "Sector": "Energy",
-    "Lead": "Ravi Kumar",
-    "Lead Status": "Active",
-    "Partner": "Evolt Mobility",
-    "Confirmation Deadline": "2025-10-15",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "ENG-2507",
-    "Assigned To Budget": 2200000,
-    "Duration": "20 months",
-    "Clarification Deadline": "2025-10-05",
-    "Selection method Submission Prep (RFP)": "Competitive Bidding",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Battery import approval",
-    "Coments": "Pilot city testing underway"
-  },
-  {
-    "sl": 8,
-    "Year": 2025,
-    "Country": "Nepal",
-    "Donor Name": "UNDP",
-    "Client Name": "Energy Board",
-    "Project Name": "Micro Hydro Expansion",
-    "Sector": "Energy",
-    "Lead": "Rohit Lama",
-    "Lead Status": "Pending",
-    "Partner": "GreenHydro Nepal",
-    "Confirmation Deadline": "2025-08-20",
-    "Process": "Proposal",
-    "Status": "Under Review",
-    "Project Code": "ENG-2508",
-    "Assigned To Budget": 800000,
-    "Duration": "16 months",
-    "Clarification Deadline": "2025-08-10",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Low river flow in dry season",
-    "Coments": "Feasibility study in progress"
-  },
-  {
-    "sl": 9,
-    "Year": 2025,
-    "Country": "Sri Lanka",
-    "Donor Name": "UN Habitat",
-    "Client Name": "Urban Council",
-    "Project Name": "Sustainable City Lighting",
-    "Sector": "Infrastructure",
-    "Lead": "Kavya Perera",
-    "Lead Status": "Active",
-    "Partner": "LightWay Solutions",
-    "Confirmation Deadline": "2025-11-01",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "INF-2509",
-    "Assigned To Budget": 900000,
-    "Duration": "14 months",
-    "Clarification Deadline": "2025-10-25",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Import tax issues",
-    "Coments": "Procurement phase"
-  },
-  {
-    "sl": 10,
-    "Year": 2025,
-    "Country": "Bangladesh",
-    "Donor Name": "World Bank",
-    "Client Name": "Power Development Board",
-    "Project Name": "Rooftop Solar Program",
-    "Sector": "Energy",
-    "Lead": "Tanvir Hossain",
-    "Lead Status": "Pending",
-    "Partner": "SolarHub BD",
-    "Confirmation Deadline": "2025-12-15",
-    "Process": "Proposal",
-    "Status": "Submitted",
-    "Project Code": "ENG-2510",
-    "Assigned To Budget": 1700000,
-    "Duration": "18 months",
-    "Clarification Deadline": "2025-12-01",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Solar panel price increase",
-    "Coments": "Awaiting approval from board"
-  }
-]
-,sheet3:[
-  {
-    "sl": 1,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "FAO",
-    "Client Name": "Department of Agriculture",
-    "Project Name": "Smart Farming Pilot",
-    "Sector": "Agriculture",
-    "Lead": "Arif Chowdhury",
-    "Lead Status": "Active",
-    "Partner": "AgroTech BD",
-    "Confirmation Deadline": "2024-05-05",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "AGR-2401",
-    "Assigned To Budget": 500000,
-    "Duration": "12 months",
-    "Clarification Deadline": "2024-04-25",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Farmer training delays",
-    "Coments": "Good community feedback"
-  },
-  {
-    "sl": 2,
-    "Year": 2024,
-    "Country": "India",
-    "Donor Name": "World Bank",
-    "Client Name": "Ministry of Forestry",
-    "Project Name": "Forest Restoration Initiative",
-    "Sector": "Environment",
-    "Lead": "Ravi Kumar",
-    "Lead Status": "Active",
-    "Partner": "EcoGreen India",
-    "Confirmation Deadline": "2024-06-20",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "ENV-2402",
-    "Assigned To Budget": 900000,
-    "Duration": "18 months",
-    "Clarification Deadline": "2024-06-10",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Seedling supply shortage",
-    "Coments": "Reforestation underway"
-  },
-  {
-    "sl": 3,
-    "Year": 2024,
-    "Country": "Nepal",
-    "Donor Name": "UNDP",
-    "Client Name": "Environmental Ministry",
-    "Project Name": "Mountain Biodiversity Protection",
-    "Sector": "Environment",
-    "Lead": "Rohit Lama",
-    "Lead Status": "Active",
-    "Partner": "Nature Nepal",
-    "Confirmation Deadline": "2024-07-05",
-    "Process": "Proposal",
-    "Status": "Submitted",
-    "Project Code": "ENV-2403",
-    "Assigned To Budget": 400000,
-    "Duration": "14 months",
-    "Clarification Deadline": "2024-06-25",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Remote area access",
-    "Coments": "Proposal under evaluation"
-  },
-  {
-    "sl": 4,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "ADB",
-    "Client Name": "Water Resources Board",
-    "Project Name": "Flood Management System",
-    "Sector": "Environment",
-    "Lead": "Tanvir Hossain",
-    "Lead Status": "Active",
-    "Partner": "HydroSafe Solutions",
-    "Confirmation Deadline": "2024-08-10",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "ENV-2404",
-    "Assigned To Budget": 850000,
-    "Duration": "20 months",
-    "Clarification Deadline": "2024-08-01",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Rainfall prediction error",
-    "Coments": "Satellite integration pending"
-  },
-  {
-    "sl": 5,
-    "Year": 2024,
-    "Country": "Pakistan",
-    "Donor Name": "FAO",
-    "Client Name": "Agriculture Development Authority",
-    "Project Name": "Soil Fertility Monitoring",
-    "Sector": "Agriculture",
-    "Lead": "Sadia Khan",
-    "Lead Status": "Active",
-    "Partner": "AgroData Labs",
-    "Confirmation Deadline": "2024-05-25",
-    "Process": "Proposal",
-    "Status": "Awarded",
-    "Project Code": "AGR-2405",
-    "Assigned To Budget": 600000,
-    "Duration": "10 months",
-    "Clarification Deadline": "2024-05-15",
-    "Selection method Submission Prep (RFP)": "Closed Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Data collection delays",
-    "Coments": "Pilot in progress"
-  },
-  {
-    "sl": 6,
-    "Year": 2024,
-    "Country": "Sri Lanka",
-    "Donor Name": "UNEP",
-    "Client Name": "Environmental Council",
-    "Project Name": "Plastic Waste Reduction Program",
-    "Sector": "Environment",
-    "Lead": "Kavya Perera",
-    "Lead Status": "Active",
-    "Partner": "CleanOcean Lanka",
-    "Confirmation Deadline": "2024-09-10",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "ENV-2406",
-    "Assigned To Budget": 700000,
-    "Duration": "16 months",
-    "Clarification Deadline": "2024-09-01",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Community engagement issues",
-    "Coments": "Awareness campaign launched"
-  },
-  {
-    "sl": 7,
-    "Year": 2024,
-    "Country": "Nepal",
-    "Donor Name": "World Bank",
-    "Client Name": "Irrigation Authority",
-    "Project Name": "Efficient Water Usage System",
-    "Sector": "Agriculture",
-    "Lead": "Rina Tamang",
-    "Lead Status": "Pending",
-    "Partner": "AquaNepal Pvt",
-    "Confirmation Deadline": "2024-07-25",
-    "Process": "Proposal",
-    "Status": "Under Review",
-    "Project Code": "AGR-2407",
-    "Assigned To Budget": 300000,
-    "Duration": "12 months",
-    "Clarification Deadline": "2024-07-15",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Technical feasibility checks",
-    "Coments": "Awaiting feedback"
-  },
-  {
-    "sl": 8,
-    "Year": 2024,
-    "Country": "India",
-    "Donor Name": "ADB",
-    "Client Name": "Rural Development Board",
-    "Project Name": "Organic Farming Promotion",
-    "Sector": "Agriculture",
-    "Lead": "Ravi Kumar",
-    "Lead Status": "Active",
-    "Partner": "AgroPure Co",
-    "Confirmation Deadline": "2024-10-15",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "AGR-2408",
-    "Assigned To Budget": 750000,
-    "Duration": "18 months",
-    "Clarification Deadline": "2024-10-05",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Farmer adoption rate low",
-    "Coments": "Workshops ongoing"
-  },
-  {
-    "sl": 9,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "UNDP",
-    "Client Name": "Department of Environment",
-    "Project Name": "Mangrove Restoration Program",
-    "Sector": "Environment",
-    "Lead": "Tanvir Hossain",
-    "Lead Status": "Active",
-    "Partner": "GreenRoots BD",
-    "Confirmation Deadline": "2024-11-20",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "ENV-2409",
-    "Assigned To Budget": 650000,
-    "Duration": "15 months",
-    "Clarification Deadline": "2024-11-10",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Coastal erosion issues",
-    "Coments": "Replanting started"
-  },
-  {
-    "sl": 10,
-    "Year": 2024,
-    "Country": "Pakistan",
-    "Donor Name": "World Bank",
-    "Client Name": "Forestry Department",
-    "Project Name": "Green Belt Expansion",
-    "Sector": "Environment",
-    "Lead": "Sadia Khan",
-    "Lead Status": "Active",
-    "Partner": "EcoLife Solutions",
-    "Confirmation Deadline": "2024-12-01",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "ENV-2410",
-    "Assigned To Budget": 780000,
-    "Duration": "17 months",
-    "Clarification Deadline": "2024-11-25",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Logistics during monsoon",
-    "Coments": "Good donor feedback"
-  }
-]
-,
-sheet4:[
-  {
-    "sl": 1,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "UNICEF",
-    "Client Name": "Ministry of Health",
-    "Project Name": "Maternal Health Improvement",
-    "Sector": "Health",
-    "Lead": "Shaila Rahman",
-    "Lead Status": "Active",
-    "Partner": "MediLink BD",
-    "Confirmation Deadline": "2024-04-15",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "HLT-2411",
-    "Assigned To Budget": 820000,
-    "Duration": "14 months",
-    "Clarification Deadline": "2024-04-05",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Staff shortage in rural hospitals",
-    "Coments": "Strong collaboration with local NGOs"
-  },
-  {
-    "sl": 2,
-    "Year": 2024,
-    "Country": "India",
-    "Donor Name": "World Bank",
-    "Client Name": "State Education Board",
-    "Project Name": "STEM for Rural Schools",
-    "Sector": "Education",
-    "Lead": "Ravi Sharma",
-    "Lead Status": "Pending",
-    "Partner": "EduNext Pvt Ltd",
-    "Confirmation Deadline": "2024-06-10",
-    "Process": "Proposal",
-    "Status": "Submitted",
-    "Project Code": "EDU-2412",
-    "Assigned To Budget": 600000,
-    "Duration": "12 months",
-    "Clarification Deadline": "2024-06-01",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "High material costs",
-    "Coments": "Awaiting donor feedback"
-  },
-  {
-    "sl": 3,
-    "Year": 2024,
-    "Country": "Nepal",
-    "Donor Name": "UNDP",
-    "Client Name": "Education Ministry",
-    "Project Name": "Inclusive Learning Program",
-    "Sector": "Education",
-    "Lead": "Sujan Lama",
-    "Lead Status": "Active",
-    "Partner": "SmartLearn Nepal",
-    "Confirmation Deadline": "2024-07-01",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "EDU-2413",
-    "Assigned To Budget": 550000,
-    "Duration": "10 months",
-    "Clarification Deadline": "2024-06-20",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Limited access in mountain areas",
-    "Coments": "Training phase ongoing"
-  },
-  {
-    "sl": 4,
-    "Year": 2024,
-    "Country": "Pakistan",
-    "Donor Name": "WHO",
-    "Client Name": "Ministry of Health",
-    "Project Name": "COVID Recovery Support",
-    "Sector": "Health",
-    "Lead": "Ahsan Raza",
-    "Lead Status": "Active",
-    "Partner": "CareZone Pvt Ltd",
-    "Confirmation Deadline": "2024-05-15",
-    "Process": "Proposal",
-    "Status": "Awarded",
-    "Project Code": "HLT-2414",
-    "Assigned To Budget": 900000,
-    "Duration": "16 months",
-    "Clarification Deadline": "2024-05-01",
-    "Selection method Submission Prep (RFP)": "Direct Selection",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Procurement delay",
-    "Coments": "Donor satisfied with progress"
-  },
-  {
-    "sl": 5,
-    "Year": 2024,
-    "Country": "Sri Lanka",
-    "Donor Name": "UNESCO",
-    "Client Name": "National Education Council",
-    "Project Name": "Digital Teacher Program",
-    "Sector": "Education",
-    "Lead": "Kavya Perera",
-    "Lead Status": "Active",
-    "Partner": "SkillBright Lanka",
-    "Confirmation Deadline": "2024-08-01",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "EDU-2415",
-    "Assigned To Budget": 450000,
-    "Duration": "8 months",
-    "Clarification Deadline": "2024-07-25",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Low teacher participation rate",
-    "Coments": "Online modules being tested"
-  },
-  {
-    "sl": 6,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "ADB",
-    "Client Name": "Ministry of Health",
-    "Project Name": "E-Clinic System Upgrade",
-    "Sector": "Health",
-    "Lead": "Tanvir Alam",
-    "Lead Status": "Pending",
-    "Partner": "MediTech BD",
-    "Confirmation Deadline": "2024-09-10",
-    "Process": "Proposal",
-    "Status": "Under Review",
-    "Project Code": "HLT-2416",
-    "Assigned To Budget": 670000,
-    "Duration": "12 months",
-    "Clarification Deadline": "2024-08-25",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Budget allocation delay",
-    "Coments": "Donor evaluation in process"
-  },
-  {
-    "sl": 7,
-    "Year": 2024,
-    "Country": "India",
-    "Donor Name": "UNICEF",
-    "Client Name": "Ministry of Women & Child",
-    "Project Name": "Child Nutrition Initiative",
-    "Sector": "Health",
-    "Lead": "Pooja Nair",
-    "Lead Status": "Active",
-    "Partner": "NutriServe Pvt Ltd",
-    "Confirmation Deadline": "2024-10-05",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "HLT-2417",
-    "Assigned To Budget": 500000,
-    "Duration": "11 months",
-    "Clarification Deadline": "2024-09-25",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Supply chain disruptions",
-    "Coments": "80% field coverage achieved"
-  },
-  {
-    "sl": 8,
-    "Year": 2024,
-    "Country": "Nepal",
-    "Donor Name": "Save the Children",
-    "Client Name": "Ministry of Education",
-    "Project Name": "Safe School Initiative",
-    "Sector": "Education",
-    "Lead": "Rina Tamang",
-    "Lead Status": "Pending",
-    "Partner": "EduSafe Nepal",
-    "Confirmation Deadline": "2024-07-20",
-    "Process": "Proposal",
-    "Status": "Submitted",
-    "Project Code": "EDU-2418",
-    "Assigned To Budget": 300000,
-    "Duration": "9 months",
-    "Clarification Deadline": "2024-07-10",
-    "Selection method Submission Prep (RFP)": "Direct Selection",
-    "CV Stat. (RFP)": "Pending",
-    "Financial (RFP)": "Pending",
-    "Compliance (RFP)": "Under Review",
-    "challanges": "Site safety checks pending",
-    "Coments": "Site inspections scheduled"
-  },
-  {
-    "sl": 9,
-    "Year": 2024,
-    "Country": "Bangladesh",
-    "Donor Name": "DFID",
-    "Client Name": "Technical Education Board",
-    "Project Name": "Vocational Health Courses",
-    "Sector": "Education",
-    "Lead": "Farhan Islam",
-    "Lead Status": "Active",
-    "Partner": "SkillCare BD",
-    "Confirmation Deadline": "2024-11-01",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "EDU-2419",
-    "Assigned To Budget": 700000,
-    "Duration": "15 months",
-    "Clarification Deadline": "2024-10-20",
-    "Selection method Submission Prep (RFP)": "Open Tender",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Under Review",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Low enrollment rate",
-    "Coments": "Campaign in progress"
-  },
-  {
-    "sl": 10,
-    "Year": 2024,
-    "Country": "Pakistan",
-    "Donor Name": "UNESCO",
-    "Client Name": "National Health Board",
-    "Project Name": "Medical Staff E-Training",
-    "Sector": "Health",
-    "Lead": "Sadia Khan",
-    "Lead Status": "Active",
-    "Partner": "Learn4Health",
-    "Confirmation Deadline": "2024-12-01",
-    "Process": "Bidding",
-    "Status": "Ongoing",
-    "Project Code": "HLT-2420",
-    "Assigned To Budget": 800000,
-    "Duration": "13 months",
-    "Clarification Deadline": "2024-11-25",
-    "Selection method Submission Prep (RFP)": "Competitive",
-    "CV Stat. (RFP)": "Approved",
-    "Financial (RFP)": "Approved",
-    "Compliance (RFP)": "Compliant",
-    "challanges": "Tech integration delays",
-    "Coments": "Strong partner performance"
-  }
-]
-
-}
-
-// Card Detail Component
+// Updated ProjectDetail Component - Minimalistic Design
 function ProjectDetail({ project, onClose }) {
-  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false)
+  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false);
 
   useEffect(() => {
     if (project.deadline) {
-      setIsDeadlinePassed(new Date(project.deadline) < new Date())
+      setIsDeadlinePassed(new Date(project.deadline) < new Date());
     }
-  }, [project.deadline])
+  }, [project.deadline]);
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    if (!amount) return "$0";
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">{project.name}</h2>
-              <p className="text-gray-600">{project.projectCode}</p>
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm font-medium text-gray-700">
+                  {project.projectCode}
+                </span>
+                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-600">
+                  {project.year}
+                </span>
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium border ${
+                    project.status === "Ongoing"
+                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                      : project.status === "Submitted"
+                      ? "bg-purple-50 text-purple-700 border-purple-200"
+                      : project.status === "Under Review"
+                      ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                      : project.status === "Awarded"
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : "bg-gray-50 text-gray-700 border-gray-200"
+                  }`}
+                >
+                  {project.status}
+                </span>
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-900 leading-tight">
+                {project.name}
+              </h2>
+              <p className="text-gray-600 mt-2">
+                {project.sector} • {project.country}
+              </p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
+              className="flex-shrink-0 w-8 h-8 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
+        </div>
 
-          {/* Project Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Basic Information</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Project ID:</span>
-                  <span className="font-medium">{project.id}</span>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-8">
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">Budget</div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(project.budget)}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sector:</span>
-                  <span className="font-medium">{project.sector}</span>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">Duration</div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {project.duration}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Country:</span>
-                  <span className="font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
-                    {project.country}
-                  </span>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">Process</div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {project.process}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Duration:</span>
-                  <span className="font-medium">{project.duration}</span>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">Status</div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {project.status}
                 </div>
               </div>
             </div>
 
-            {/* Financial Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Financial Information</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Budget:</span>
-                  <span className="font-medium text-green-600">${project.budget?.toLocaleString()}</span>
+            {/* Main Information Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {/* Project Details */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                    Project Details
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Project ID</span>
+                      <span className="font-medium text-gray-900">
+                        {project.id}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Sector</span>
+                      <span className="font-medium text-gray-900">
+                        {project.sector}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Selection Method</span>
+                      <span className="font-medium text-gray-900">
+                        {project.selectionMethod}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-gray-600">Country</span>
+                      <span className="font-medium text-gray-900">
+                        {project.country}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Deadline:</span>
-                  <span className={`font-medium ${isDeadlinePassed ? 'text-red-600' : 'text-gray-800'}`}>
-                    {project.deadline}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Process:</span>
-                  <span className="font-medium">{project.process}</span>
+
+                {/* Timeline */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                    Timeline
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Confirmation</span>
+                      <span className="font-medium text-gray-900">
+                        {project.confirmation}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-gray-600">
+                        Clarification Deadline
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {project.clarificationDeadline}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Stakeholders */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Stakeholders</h3>
-              <div className="space-y-3">
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* Team & Contacts */}
                 <div>
-                  <span className="text-gray-600 block mb-1">Donor:</span>
-                  <span className="font-medium">{project.donor}</span>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                    Team & Contacts
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Project Lead</span>
+                      <span className="font-medium text-gray-900">
+                        {project.lead}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Lead Status</span>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          project.leadStatus === "Active"
+                            ? "bg-green-50 text-green-700"
+                            : project.leadStatus === "Pending"
+                            ? "bg-yellow-50 text-yellow-700"
+                            : "bg-gray-50 text-gray-700"
+                        }`}
+                      >
+                        {project.leadStatus}
+                      </span>
+                    </div>
+              
+                  </div>
                 </div>
+
+                {/* Stakeholders */}
                 <div>
-                  <span className="text-gray-600 block mb-1">Client:</span>
-                  <span className="font-medium">{project.client}</span>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                    Stakeholders
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Donor</span>
+                      <span className="font-medium text-gray-900">
+                        {project.donor}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Client</span>
+                      <span className="font-medium text-gray-900">
+                        {project.client}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-gray-600">Partner</span>
+                      <span className="font-medium text-gray-900">
+                        {project.partner}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-gray-600 block mb-1">Partner:</span>
-                  <span className="font-medium">{project.partner}</span>
-                </div>
+
+                {/* Evaluation Scores */}
+                {(project.technicalScore !== "N/A" ||
+                  project.financialScore !== "N/A") && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                      Evaluation
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {project.technicalScore !== "N/A" && (
+                        <div className="text-center">
+                          <div className="text-sm text-gray-600">
+                            Technical Score
+                          </div>
+                          <div className="text-lg font-semibold text-gray-900">
+                            {project.technicalScore}
+                          </div>
+                        </div>
+                      )}
+                      {project.financialScore !== "N/A" && (
+                        <div className="text-center">
+                          <div className="text-sm text-gray-600">
+                            Financial Score
+                          </div>
+                          <div className="text-lg font-semibold text-gray-900">
+                            {project.financialScore}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Project Team */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Project Team</h3>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-gray-600 block mb-1">Lead:</span>
-                  <span className="font-medium">{project.lead}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600 block mb-1">Lead Status:</span>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    project.leadStatus === 'Active' 
-                      ? 'bg-green-100 text-green-800'
-                      : project.leadStatus === 'Pending'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {project.leadStatus}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600 block mb-1">Project Status:</span>
-                  <span className="font-medium">{project.status}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Challenges & Comments */}
-          <div className="space-y-6">
-            {project.challenges && (
+            {/* RFP Status */}
+            {(project.submissionPrepRFP !== "N/A" || 
+              project.cvStatRFP !== "N/A" || 
+              project.financialRFP !== "N/A") && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">Challenges</h3>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-800">{project.challenges}</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                  RFP Status
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {project.submissionPrepRFP !== "N/A" && (
+                    <div className="text-center border border-gray-200 rounded-lg p-4">
+                      <div className="text-sm text-gray-600 mb-2">Submission Prep</div>
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium inline-block ${
+                        project.submissionPrepRFP === "Completed" 
+                          ? "bg-green-50 text-green-700 border border-green-200" 
+                          : project.submissionPrepRFP === "In Progress"
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : project.submissionPrepRFP === "Pending"
+                          ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                          : "bg-gray-50 text-gray-700 border border-gray-200"
+                      }`}>
+                        {project.submissionPrepRFP}
+                      </div>
+                    </div>
+                  )}
+                  {project.cvStatRFP !== "N/A" && (
+                    <div className="text-center border border-gray-200 rounded-lg p-4">
+                      <div className="text-sm text-gray-600 mb-2">CV Status</div>
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium inline-block ${
+                        project.cvStatRFP === "Approved" 
+                          ? "bg-green-50 text-green-700 border border-green-200" 
+                          : project.cvStatRFP === "Submitted"
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : project.cvStatRFP === "Pending"
+                          ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                          : "bg-gray-50 text-gray-700 border border-gray-200"
+                      }`}>
+                        {project.cvStatRFP}
+                      </div>
+                    </div>
+                  )}
+                {project.financialRFP !== "N/A" && (
+  <div className="text-center border border-gray-200 rounded-lg p-4">
+    <div className="text-sm text-gray-600 mb-2">Financial</div>
+    <div
+      className={`px-3 py-1 rounded-full text-sm font-medium inline-block
+        ${
+          project.financialRFP === "Approved"
+            ? "bg-green-50 text-green-700 border border-green-200"
+          : project.financialRFP === "Cleared"
+            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+          : project.financialRFP === "Under Review"
+            ? "bg-blue-50 text-blue-700 border border-blue-200"
+          : project.financialRFP === "Pending"
+            ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+          : "bg-gray-50 text-gray-700 border border-gray-200"
+        }`}
+    >
+      {project.financialRFP}
+    </div>
+  </div>
+)}
+
                 </div>
               </div>
             )}
 
-            {project.comments && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">Comments</h3>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-blue-800">{project.comments}</p>
+            {/* Additional Information */}
+            {(project.challenges || project.comments) && (
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Additional Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {project.challenges && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        Challenges
+                      </h4>
+                      <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-lg">
+                        {project.challenges}
+                      </p>
+                    </div>
+                  )}
+                  {project.comments && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        Comments
+                      </h4>
+                      <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-lg">
+                        {project.comments}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Summary Section */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold text-gray-800 mb-2">Project Summary</h3>
-            <p className="text-sm text-gray-600">
-              {project.name} is a {project.sector?.toLowerCase()} project in {project.country} with a budget of ${project.budget?.toLocaleString()}. 
-              The project is currently {project.status?.toLowerCase()} and led by {project.lead}.
-            </p>
+        {/* Footer */}
+        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              Project ID: {project.id} • Last updated:{" "}
+              {new Date().toLocaleDateString()}
+            </div>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
-
-// Project Card Component
+// Updated ProjectCard Component to show more information
 function ProjectCard({ project, onClick }) {
-  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false)
+  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false);
 
   useEffect(() => {
     if (project.deadline) {
-      setIsDeadlinePassed(new Date(project.deadline) < new Date())
+      setIsDeadlinePassed(new Date(project.clarificationDeadline) < new Date());
     }
-  }, [project.deadline])
+  }, [project.clarificationDeadline]);
 
   return (
-    <div 
+    <div
       onClick={() => onClick(project)}
       className="border border-gray-200 rounded-lg p-5 hover:shadow-lg transition-all duration-200 bg-white cursor-pointer transform hover:-translate-y-1"
     >
@@ -1204,6 +413,7 @@ function ProjectCard({ project, onClick }) {
             {project.name}
           </h4>
           <p className="text-sm text-gray-600 mt-1">{project.projectCode}</p>
+          <p className="text-xs text-gray-500 mt-1">Year: {project.year}</p>
         </div>
         <span className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-medium text-blue-800">
           {project.id}
@@ -1211,27 +421,37 @@ function ProjectCard({ project, onClick }) {
       </div>
 
       {/* Basic Info */}
-      <div className="space-y-3 mb-4">
+      <div className="space-y-2 mb-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Country</span>
-          <span className="font-medium text-gray-800">{project.country}</span>
+          <span className="font-medium text-gray-800 text-sm">
+            {project.country}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Sector</span>
-          <span className="font-medium text-gray-800">{project.sector}</span>
+          <span className="font-medium text-gray-800 text-sm">
+            {project.sector}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Donor</span>
-          <span className="font-medium text-gray-800 text-sm">{project.donor}</span>
+          <span className="font-medium text-gray-800 text-sm">
+            {project.donor}
+          </span>
         </div>
       </div>
 
       {/* Status & Budget */}
       <div className="border-t border-gray-100 pt-3 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Deadline</span>
-          <span className={`text-sm font-medium ${isDeadlinePassed ? 'text-red-600' : 'text-gray-800'}`}>
-            {project.deadline}
+          <span className="text-sm text-gray-600">Clarification Deadline</span>
+          <span
+            className={`text-sm font-medium ${
+              isDeadlinePassed ? "text-red-600" : "text-gray-800"
+            }`}
+          >
+            {project.clarificationDeadline}
           </span>
         </div>
         <div className="flex items-center justify-between">
@@ -1241,18 +461,39 @@ function ProjectCard({ project, onClick }) {
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Status</span>
-          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-            project.leadStatus === 'Active' 
-              ? 'bg-green-100 text-green-800'
-              : project.leadStatus === 'Pending'
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}>
+          <span className="text-sm text-gray-600">Lead Status</span>
+          <span
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+              project.leadStatus === "Active"
+                ? "bg-green-100 text-green-800"
+                : project.leadStatus === "Pending"
+                ? "bg-yellow-100 text-yellow-800"
+                : "bg-gray-100 text-gray-800"
+            }`}
+          >
             {project.leadStatus}
           </span>
         </div>
       </div>
+
+      {/* Evaluation Scores */}
+      {(project.technicalScore !== "N/A" ||
+        project.financialScore !== "N/A") && (
+        <div className="border-t border-gray-100 pt-3 mt-3">
+          <div className="flex justify-between text-xs">
+            {project.technicalScore !== "N/A" && (
+              <span className="text-blue-600">
+                Tech: {project.technicalScore}
+              </span>
+            )}
+            {project.financialScore !== "N/A" && (
+              <span className="text-green-600">
+                Finance: {project.financialScore}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Challenges & Comments Preview */}
       {(project.challenges || project.comments) && (
@@ -1273,117 +514,319 @@ function ProjectCard({ project, onClick }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export default function CardComponent() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [selectedProject, setSelectedProject] = useState(null)
-  const [usingFallback, setUsingFallback] = useState(false)
-  const params = useParams()
-  const router = useRouter()
-  const sheetName = params.slug
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const params = useParams();
+  const router = useRouter();
+  const sheetName = decodeURIComponent(params.slug);
+
+  const getSheetType = () => {
+    const name = sheetName.toLowerCase();
+    if (name.includes("eoi") && name.includes("evaluation"))
+      return "eoi-evaluation";
+    if (name.includes("eoi") && name.includes("preparation"))
+      return "eoi-preparation";
+    if (name.includes("proposal") && name.includes("evaluation"))
+      return "proposal-evaluation";
+    if (name.includes("proposal") && name.includes("preparation"))
+      return "proposal-preparation";
+    return "general";
+  };
+
+  const sheetType = getSheetType();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchGoogleSheetData = async () => {
       try {
-        setLoading(true)
-        setError(null)
-        setUsingFallback(false)
-        
-        // Try to fetch from JSON file first
-        const url = `/data/${sheetName}.json`
-        console.log('Fetching data from:', url)
-        
-        const response = await axios.get(url, {
-          timeout: 5000,
-          validateStatus: function (status) {
-            return status === 200 // Only accept 200 status
+        setLoading(true);
+        setError(null);
+
+        const sheetId = "1KmB55ZXF3o0bjomXFOAtksAOpUTUwZTuLbZWLuLYSYU";
+
+        console.log(`📥 Fetching data from: ${sheetName} (Type: ${sheetType})`);
+
+        // Try CSV format first
+        try {
+          const csvResponse = await fetch(
+            `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
+              sheetName
+            )}`
+          );
+
+          if (!csvResponse.ok) {
+            throw new Error(`CSV fetch failed: ${csvResponse.status}`);
           }
-        })
-        
-        setData(response.data)
-        console.log('Data loaded successfully from JSON file')
-        
-      } catch (err) {
-        console.error('Error fetching data from JSON:', err)
-        
-        // If JSON file not found, use fallback data
-        if (fallbackData[sheetName]) {
-          console.log('Using fallback data for:', sheetName)
-          setData(fallbackData[sheetName])
-          setUsingFallback(true)
-        } else {
-          setError(`Data not found for "${sheetName}". Please create public/data/${sheetName}.json file.`)
-          setData([])
+
+          const csvText = await csvResponse.text();
+
+          if (!csvText || csvText.trim().length === 0) {
+            throw new Error("Empty CSV response");
+          }
+
+          console.log("CSV data received, converting to JSON...");
+
+          // Convert CSV to JSON
+          const jsonData = csvToJson(csvText);
+          console.log(`✅ Loaded ${jsonData.length} rows from "${sheetName}"`);
+          console.log("Sample data:", jsonData.slice(0, 2));
+
+          setData(jsonData);
+          return;
+        } catch (csvError) {
+          console.log("CSV method failed, trying Excel export...", csvError);
+
+          // Fallback to Excel export
+          const excelResponse = await fetch(
+            `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=xlsx&sheet=${encodeURIComponent(
+              sheetName
+            )}`
+          );
+
+          if (!excelResponse.ok) {
+            throw new Error(`Excel export failed: ${excelResponse.status}`);
+          }
+
+          const arrayBuffer = await excelResponse.arrayBuffer();
+          const XLSX = await import("xlsx");
+          const workbook = XLSX.read(arrayBuffer, { type: "array" });
+
+          if (!workbook.SheetNames.includes(sheetName)) {
+            throw new Error(
+              `Sheet "${sheetName}" not found. Available sheets: ${workbook.SheetNames.join(
+                ", "
+              )}`
+            );
+          }
+
+          const selectedSheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(selectedSheet);
+
+          console.log(`✅ Loaded ${jsonData.length} rows from "${sheetName}"`);
+          setData(jsonData);
         }
+      } catch (err) {
+        console.error("❌ Error fetching Google Sheet data:", err);
+        setError(`Failed to load data: ${err.message}`);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
+
+    // CSV to JSON conversion helper
+    const csvToJson = (csvText) => {
+      const lines = csvText.split("\n").filter((line) => line.trim() !== "");
+      if (lines.length === 0) return [];
+
+      const headers = lines[0]
+        .split(",")
+        .map((header) => header.trim().replace(/"/g, ""));
+
+      const jsonData = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCsvLine(lines[i]);
+        const obj = {};
+
+        headers.forEach((header, index) => {
+          obj[header] = values[index] || "";
+        });
+
+        if (!obj.id && !obj.sl && !obj.ID) {
+          obj.id = i;
+        }
+
+        jsonData.push(obj);
+      }
+
+      return jsonData;
+    };
+
+    const parseCsvLine = (line) => {
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          result.push(current.trim().replace(/^"|"$/g, ""));
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+
+      result.push(current.trim().replace(/^"|"$/g, ""));
+      return result;
+    };
 
     if (sheetName) {
-      fetchData()
-    } else {
-      setError('No sheet name provided')
-      setLoading(false)
+      fetchGoogleSheetData();
     }
-  }, [sheetName])
+  }, [sheetName, sheetType]);
 
   const handleBack = () => {
-    router.back()
-  }
+    router.back();
+  };
 
   const handleCardClick = (project) => {
-    setSelectedProject(project)
-  }
+    setSelectedProject(project);
+  };
 
   const handleCloseDetail = () => {
-    setSelectedProject(null)
-  }
+    setSelectedProject(null);
+  };
 
-  // Function to extract projects from your specific data structure
   const getProjects = () => {
-    if (!data) return []
-    
-    if (Array.isArray(data)) {
-      return data.map(item => ({
-        id: item.sl || item.id || 'N/A',
-        name: item["Project Name"] || item["Project name"] || item.projectName || 'Unnamed Project',
-        deadline: item["Confirmation Deadline"] || item.Deadline || item.deadline || 'No deadline',
-        country: item.Country || item.country || 'Unknown',
-        donor: item["Donor Name"] || item.Donor || item.donor || 'Unknown donor',
-        client: item["Client Name"] || item.Client || item.client || 'Unknown client',
-        sector: item.Sector || item.sector || 'General',
-        lead: item.Lead || item.lead || 'Unassigned',
-        leadStatus: item["Lead Status"] || item.Status || item.status || 'Unknown',
-        partner: item.Partner || item.partner || 'No partner',
-        status: item.Status || item.status || item["Project Status"] || 'Unknown',
-        projectCode: item["Project Code"] || item.Code || item.code || 'N/A',
-        budget: parseFloat(item["Assigned To Budget"] || item.Budget || item.budget || 0),
-        duration: item.Duration || item.duration || 'Not specified',
-        process: item.Process || item.process || 'Not specified',
-        challenges: item.challanges || item.Challenges || item.challenges || '',
-        comments: item.Coments || item.Comments || item.comments || ''
-      }))
+    if (!data || data.length === 0) return [];
+
+    return data.map((item, index) => {
+      // Map data EXACTLY based on your provided keys
+      const baseProject = {
+        // Basic Information
+        id: item.sl || index + 1,
+        year: item.Year || "Not specified",
+        country: item.Country || "Unknown",
+        donor: item["Donor Name"] || "Unknown donor",
+        client: item["Client Name"] || "Unknown client",
+        name: item["Project Name"] || "Unnamed Project",
+        sector: item.Sector || "General",
+        lead: item.Lead || "Unassigned",
+        leadStatus: item["Lead Status"] || "Unknown",
+        partner: item.Partner || "No partner",
+        confirmation: item["Confirmation Deadline"] || "No confirmation",
+        process: item.Process || "Not specified",
+        status: item.Status || "Unknown",
+        projectCode: item["Project Code"] || "N/A",
+        budget: parseFloat(item["Assigned To Budget"] || 0),
+        duration: item.Duration || "Not specified",
+        clarificationDeadline:
+          item["Clarification Deadline"] || "Not specified",
+        selectionMethod:
+          item["Selection method Submission Prep (RFP)"] || "Not specified",
+
+        // RFP Fields
+        submissionPrepRFP: item["Submission Prep (RFP)"] || "N/A",
+        cvStatRFP: item["CV Stat. (RFP)"] || "N/A",
+        financialRFP: item["Financial (RFP)"] || "N/A",
+
+        _raw: item, // Keep raw data for debugging
+      };
+
+      // Add sheet-type specific fields
+      switch (sheetType) {
+        case "eoi-preparation":
+          return {
+            ...baseProject,
+            sheetType: "eoi-preparation",
+          };
+
+        case "eoi-evaluation":
+          return {
+            ...baseProject,
+            sheetType: "eoi-evaluation",
+            partnerStatEoI: item["Partner Stat (EoI)"] || "N/A",
+            bioDataStatEoI: item["Bio-data Stat (EoI)"] || "N/A",
+            submissionPrepEoI: item["Submissiom Prep (EoI)"] || "N/A",
+            challengesEoI: item["Challanges (EoI)"] || "",
+            commentsEoI: item["Comments (EoI)"] || "",
+            eoiEvaluationStatus:
+              item["EoI Evaluation Status"] || "Not evaluated",
+          };
+
+        case "proposal-preparation":
+          return {
+            ...baseProject,
+            sheetType: "proposal-preparation",
+            technicalScore: item["Technical Score"] || "N/A",
+            financialScore: item["Financial Score"] || "N/A",
+            position: item.Position || "N/A",
+            comments: item.Comments || "",
+          };
+
+        case "proposal-evaluation":
+          return {
+            ...baseProject,
+            sheetType: "proposal-evaluation",
+            complianceRFP: item["Compliance (RFP)"] || "N/A",
+            challenges: item.Challanges || "",
+            commentsRFP: item["Comments (RFP)"] || "",
+            rfpEvaluation: item["RFP Evaluation"] || "Not evaluated",
+          };
+
+        default:
+          return {
+            ...baseProject,
+            sheetType: "general",
+          };
+      }
+    });
+  };
+
+  const projects = getProjects();
+
+  // Debug: Log the first project to see the actual keys
+  useEffect(() => {
+    if (projects.length > 0) {
+      console.log("📊 First project data with exact keys:", projects[0]);
+      console.log("🔑 All available keys:", Object.keys(projects[0]));
     }
-    
-    return []
-  }
+  }, [projects]);
 
-  const projects = getProjects()
+  // Simplified stats - always show the same four metrics
+ const getStats = () => {
+  const total = projects.length;
+  
+  // Count projects by status
+  const ongoing = projects.filter(p => 
+    p.status?.toLowerCase() === "ongoing"
+  ).length;
+  
+  const submitted = projects.filter(p => 
+    p.status?.toLowerCase() === "submitted"
+  ).length;
+  
+  const underReview = projects.filter(p => 
+    p.status?.toLowerCase() === "under review"
+  ).length;
+  
+  const awarded = projects.filter(p => 
+    p.status?.toLowerCase() === "awarded"
+  ).length;
+  
+  const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
 
-  // Calculate statistics
-  const stats = {
-    total: projects.length,
-    active: projects.filter(p => p.leadStatus?.toLowerCase().includes('active')).length,
-    pending: projects.filter(p => p.leadStatus?.toLowerCase().includes('pending')).length,
-    totalBudget: projects.reduce((sum, p) => sum + (p.budget || 0), 0)
-  }
+  return {
+    total,
+    ongoing,
+    submitted,
+    underReview,
+    awarded,
+    totalBudget,
+  };
+};
 
-  if (error && !usingFallback) {
+const stats = getStats();
+
+// Updated stat labels to match the new status types
+const statLabels = [
+  { label: 'Total Projects', value: stats.total },
+  { label: 'Ongoing', value: stats.ongoing },
+  { label: 'Submitted', value: stats.submitted },
+  { label: 'Under Review', value: stats.underReview },
+  { label: 'Awarded', value: stats.awarded },
+  { label: 'Total Budget', value: `$${(stats.totalBudget / 1000000).toFixed(1)}M` }
+];
+
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -1392,24 +835,48 @@ export default function CardComponent() {
             onClick={handleBack}
             className="mb-6 px-4 py-2 flex items-center text-blue-500 hover:text-blue-700 transition-colors"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             Back to Dashboard
           </button>
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <svg className="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            <svg
+              className="w-12 h-12 mx-auto mb-4 text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
             </svg>
-            <h3 className="text-lg font-medium text-red-800 mb-2">Data File Not Found</h3>
+            <h3 className="text-lg font-medium text-red-800 mb-2">
+              Error Loading Data
+            </h3>
             <p className="text-red-600 mb-4">{error}</p>
             <div className="space-y-3 text-sm text-red-700 text-left bg-red-100 p-4 rounded-lg">
-              <p><strong>To fix this issue:</strong></p>
+              <p>
+                <strong>Troubleshooting steps:</strong>
+              </p>
               <ul className="list-disc list-inside space-y-1">
-                <li>Create <code>public/data/{sheetName}.json</code> file</li>
-                <li>Add valid JSON data to the file</li>
-                <li>Redeploy your application</li>
-                <li>Make sure the file name matches exactly: <strong>{sheetName}.json</strong></li>
+                <li>Make sure the Google Sheet is publicly accessible</li>
+                <li>Check if the sheet name exists in the document</li>
+                <li>Verify your internet connection</li>
+                <li>Try refreshing the page</li>
               </ul>
             </div>
             <div className="mt-6 space-x-4">
@@ -1430,7 +897,7 @@ export default function CardComponent() {
         </div>
         <Footer />
       </div>
-    )
+    );
   }
 
   if (loading) {
@@ -1442,34 +909,55 @@ export default function CardComponent() {
             onClick={handleBack}
             className="mb-6 px-4 py-2 flex items-center text-blue-500 hover:text-blue-700 transition-colors"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             Back to Dashboard
           </button>
           <div className="flex flex-col justify-center items-center h-64 space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <div className="text-lg text-gray-600">Loading {sheetName} data...</div>
-            <div className="text-sm text-gray-500">Loading from: /data/{sheetName}.json</div>
+            <div className="text-lg text-gray-600">
+              Loading {sheetName} data from Google Sheets...
+            </div>
           </div>
         </div>
         <Footer />
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Back Button */}
         <button
           onClick={handleBack}
           className="mb-6 px-4 py-2 flex items-center text-blue-500 hover:text-blue-700 transition-colors"
         >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <svg
+            className="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
           Back to Dashboard
         </button>
@@ -1480,37 +968,58 @@ export default function CardComponent() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold capitalize text-gray-800">
-                {sheetName?.replace(/([A-Z])/g, ' $1')} 
+                {sheetName?.replace(/([A-Z])/g, " $1")}
               </h1>
               <p className="text-gray-600 mt-1">Project Data Overview</p>
-              <p className="text-sm text-gray-500">
-                Data source: {usingFallback ? 'Sample Data' : `/data/${sheetName}.json`}
+              <p className="text-sm text-green-600 mt-1">
+                ✅ Connected to Google Sheets
               </p>
             </div>
           </div>
 
-      
-
-          {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="text-2xl font-bold text-blue-800">{stats.total}</div>
-              <div className="text-sm text-blue-600">Total Projects</div>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="text-2xl font-bold text-green-800">{stats.active}</div>
-              <div className="text-sm text-green-600">Active Leads</div>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <div className="text-2xl font-bold text-yellow-800">{stats.pending}</div>
-              <div className="text-sm text-yellow-600">Pending Leads</div>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-              <div className="text-2xl font-bold text-purple-800">
-                ${(stats.totalBudget / 1000000).toFixed(1)}M
+          {/* Statistics - Always show the same four stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {statLabels.map((stat, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-lg border ${
+                  index === 0
+                    ? "bg-blue-50 border-blue-200"
+                    : index === 1
+                    ? "bg-green-50 border-green-200"
+                    : index === 2
+                    ? "bg-yellow-50 border-yellow-200"
+                    : "bg-purple-50 border-purple-200"
+                }`}
+              >
+                <div
+                  className={`text-2xl font-bold ${
+                    index === 0
+                      ? "text-blue-800"
+                      : index === 1
+                      ? "text-green-800"
+                      : index === 2
+                      ? "text-yellow-800"
+                      : "text-purple-800"
+                  }`}
+                >
+                  {stat.value}
+                </div>
+                <div
+                  className={`text-sm ${
+                    index === 0
+                      ? "text-blue-600"
+                      : index === 1
+                      ? "text-green-600"
+                      : index === 2
+                      ? "text-yellow-600"
+                      : "text-purple-600"
+                  }`}
+                >
+                  {stat.label}
+                </div>
               </div>
-              <div className="text-sm text-purple-600">Total Budget</div>
-            </div>
+            ))}
           </div>
 
           {/* Projects List */}
@@ -1518,24 +1027,37 @@ export default function CardComponent() {
             <div className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {projects.map((project, index) => (
-                  <ProjectCard 
-                    key={project.id || index} 
-                    project={project} 
+                  <ProjectCard
+                    key={project.id || index}
+                    project={project}
                     onClick={handleCardClick}
                   />
                 ))}
               </div>
               <div className="mt-6 text-center text-sm text-gray-500">
-                Showing {projects.length} projects • Click on any card to view details
+                Showing {projects.length} projects • Click on any card to view
+                details
               </div>
             </div>
           ) : (
             <div className="text-center py-12 text-gray-500">
-              <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                className="w-16 h-16 mx-auto mb-4 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               <p className="text-lg mb-2">No projects found</p>
-              <p className="text-sm">No project data available in {sheetName}</p>
+              <p className="text-sm">
+                No project data available in {sheetName}
+              </p>
               <button
                 onClick={handleBack}
                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
@@ -1549,12 +1071,9 @@ export default function CardComponent() {
 
       {/* Project Detail Modal */}
       {selectedProject && (
-        <ProjectDetail 
-          project={selectedProject} 
-          onClose={handleCloseDetail} 
-        />
+        <ProjectDetail project={selectedProject} onClose={handleCloseDetail} />
       )}
       <Footer />
     </div>
-  )
+  );
 }

@@ -4,6 +4,127 @@ import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 
+// Calendar Component with Responsive Design
+function PublicCalendarEmbed() {
+  const calendarId = `ebfd43544ed27c53e69fa2a5eec35b0e803e5bcc7e0c29a214ae59f6a2727aa5@group.calendar.google.com`;
+  
+  // Enhanced calendar URL with responsive parameters
+  const embedUrl = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=Asia%2FDhaka&mode=MONTH&showPrint=0&showCalendars=0&showTz=0&showTitle=0&showNav=1&showDate=1&showTabs=1`;
+  
+  // Direct link to open in Google Calendar
+  const webUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarId)}`;
+  
+  // State for responsive height
+  const [calendarHeight, setCalendarHeight] = useState(600);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Test if calendar is accessible
+  const testCalendarAccess = async () => {
+    try {
+      const response = await fetch(`https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`);
+      if (response.ok) {
+        console.log('✅ Calendar is publicly accessible');
+        return true;
+      } else {
+        console.log('❌ Calendar may not be public');
+        return false;
+      }
+    } catch (error) {
+      console.log('❌ Cannot access calendar:', error);
+      return false;
+    }
+  };
+
+  // Handle responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      
+      // Adjust height based on screen size
+      if (width < 640) {
+        setCalendarHeight(400); // Very small screens
+      } else if (width < 768) {
+        setCalendarHeight(500); // Small tablets
+      } else if (width < 1024) {
+        setCalendarHeight(550); // Tablets
+      } else {
+        setCalendarHeight(600); // Desktop
+      }
+    };
+
+    // Set initial values
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Test calendar access
+    testCalendarAccess();
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-800">Project Deadlines Calendar</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            View all project deadlines in calendar format
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">Live Sync</span>
+          <a 
+            href={webUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors whitespace-nowrap"
+          >
+            {isMobile ? "Open Calendar" : "Open in Google Calendar"}
+          </a>
+        </div>
+      </div>
+
+      
+
+      {/* Calendar Embed Container */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 relative">
+        {/* Loading State */}
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-sm text-gray-600">Loading Calendar...</p>
+          </div>
+        </div>
+        
+        {/* Calendar Iframe */}
+        <iframe
+          src={embedUrl}
+          style={{ border: 0 }}
+          width="100%"
+          height={calendarHeight}
+          frameBorder="0"
+          scrolling={isMobile ? "yes" : "no"}
+          title="Project Deadlines Calendar"
+          loading="lazy"
+          className="relative z-20"
+          onLoad={() => {
+            // Hide loading state when iframe loads
+            const loadingElement = document.querySelector('.absolute.inset-0');
+            if (loadingElement) {
+              loadingElement.style.display = 'none';
+            }
+          }}
+        />
+      </div>
+
+    </div>
+  );
+}
+
 // Updated ProjectDetail Component - Minimalistic Design
 function ProjectDetail({ project, onClose }) {
   const [isDeadlinePassed, setIsDeadlinePassed] = useState(false);
@@ -207,7 +328,6 @@ function ProjectDetail({ project, onClose }) {
                         {project.leadStatus}
                       </span>
                     </div>
-              
                   </div>
                 </div>
 
@@ -313,28 +433,27 @@ function ProjectDetail({ project, onClose }) {
                       </div>
                     </div>
                   )}
-                {project.financialRFP !== "N/A" && (
-  <div className="text-center border border-gray-200 rounded-lg p-4">
-    <div className="text-sm text-gray-600 mb-2">Financial</div>
-    <div
-      className={`px-3 py-1 rounded-full text-sm font-medium inline-block
-        ${
-          project.financialRFP === "Approved"
-            ? "bg-green-50 text-green-700 border border-green-200"
-          : project.financialRFP === "Cleared"
-            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-          : project.financialRFP === "Under Review"
-            ? "bg-blue-50 text-blue-700 border border-blue-200"
-          : project.financialRFP === "Pending"
-            ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-          : "bg-gray-50 text-gray-700 border border-gray-200"
-        }`}
-    >
-      {project.financialRFP}
-    </div>
-  </div>
-)}
-
+                  {project.financialRFP !== "N/A" && (
+                    <div className="text-center border border-gray-200 rounded-lg p-4">
+                      <div className="text-sm text-gray-600 mb-2">Financial</div>
+                      <div
+                        className={`px-3 py-1 rounded-full text-sm font-medium inline-block
+                          ${
+                            project.financialRFP === "Approved"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                            : project.financialRFP === "Cleared"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : project.financialRFP === "Under Review"
+                              ? "bg-blue-50 text-blue-700 border border-blue-200"
+                            : project.financialRFP === "Pending"
+                              ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                            : "bg-gray-50 text-gray-700 border border-gray-200"
+                          }`}
+                      >
+                        {project.financialRFP}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -391,6 +510,7 @@ function ProjectDetail({ project, onClose }) {
     </div>
   );
 }
+
 // Updated ProjectCard Component to show more information
 function ProjectCard({ project, onClick }) {
   const [isDeadlinePassed, setIsDeadlinePassed] = useState(false);
@@ -522,6 +642,7 @@ export default function CardComponent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [activeView, setActiveView] = useState('list'); // 'list' or 'calendar'
   const params = useParams();
   const router = useRouter();
   const sheetName = decodeURIComponent(params.slug);
@@ -782,49 +903,49 @@ export default function CardComponent() {
   }, [projects]);
 
   // Simplified stats - always show the same four metrics
- const getStats = () => {
-  const total = projects.length;
-  
-  // Count projects by status
-  const ongoing = projects.filter(p => 
-    p.status?.toLowerCase() === "ongoing"
-  ).length;
-  
-  const submitted = projects.filter(p => 
-    p.status?.toLowerCase() === "submitted"
-  ).length;
-  
-  const underReview = projects.filter(p => 
-    p.status?.toLowerCase() === "under review"
-  ).length;
-  
-  const awarded = projects.filter(p => 
-    p.status?.toLowerCase() === "awarded"
-  ).length;
-  
-  const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
+  const getStats = () => {
+    const total = projects.length;
+    
+    // Count projects by status
+    const ongoing = projects.filter(p => 
+      p.status?.toLowerCase() === "ongoing"
+    ).length;
+    
+    const submitted = projects.filter(p => 
+      p.status?.toLowerCase() === "submitted"
+    ).length;
+    
+    const underReview = projects.filter(p => 
+      p.status?.toLowerCase() === "under review"
+    ).length;
+    
+    const awarded = projects.filter(p => 
+      p.status?.toLowerCase() === "awarded"
+    ).length;
+    
+    const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
 
-  return {
-    total,
-    ongoing,
-    submitted,
-    underReview,
-    awarded,
-    totalBudget,
+    return {
+      total,
+      ongoing,
+      submitted,
+      underReview,
+      awarded,
+      totalBudget,
+    };
   };
-};
 
-const stats = getStats();
+  const stats = getStats();
 
-// Updated stat labels to match the new status types
-const statLabels = [
-  { label: 'Total Projects', value: stats.total },
-  { label: 'Ongoing', value: stats.ongoing },
-  { label: 'Submitted', value: stats.submitted },
-  { label: 'Under Review', value: stats.underReview },
-  { label: 'Awarded', value: stats.awarded },
-  { label: 'Total Budget', value: `$${(stats.totalBudget / 1000000).toFixed(1)}M` }
-];
+  // Updated stat labels to match the new status types
+  const statLabels = [
+    { label: 'Total Projects', value: stats.total },
+    { label: 'Ongoing', value: stats.ongoing },
+    { label: 'Submitted', value: stats.submitted },
+    { label: 'Under Review', value: stats.underReview },
+    { label: 'Awarded', value: stats.awarded },
+    { label: 'Total Budget', value: `$${(stats.totalBudget / 1000000).toFixed(1)}M` }
+  ];
 
   if (error) {
     return (
@@ -962,12 +1083,12 @@ const statLabels = [
           Back to Dashboard
         </button>
 
-        {/* Card Details */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        {/* Main Content Container */}
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
-              <h1 className="text-2xl font-bold capitalize text-gray-800">
+              <h1 className="text-xl sm:text-2xl font-bold capitalize text-gray-800">
                 {sheetName?.replace(/([A-Z])/g, " $1")}
               </h1>
               <p className="text-gray-600 mt-1">Project Data Overview</p>
@@ -977,8 +1098,8 @@ const statLabels = [
             </div>
           </div>
 
-          {/* Statistics - Always show the same four stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Statistics */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {statLabels.map((stat, index) => (
               <div
                 key={index}
@@ -993,7 +1114,7 @@ const statLabels = [
                 }`}
               >
                 <div
-                  className={`text-2xl font-bold ${
+                  className={`text-xl sm:text-2xl font-bold ${
                     index === 0
                       ? "text-blue-800"
                       : index === 1
@@ -1022,50 +1143,79 @@ const statLabels = [
             ))}
           </div>
 
-          {/* Projects List */}
-          {projects.length > 0 ? (
-            <div className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {projects.map((project, index) => (
-                  <ProjectCard
-                    key={project.id || index}
-                    project={project}
-                    onClick={handleCardClick}
-                  />
-                ))}
-              </div>
-              <div className="mt-6 text-center text-sm text-gray-500">
-                Showing {projects.length} projects • Click on any card to view
-                details
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              <svg
-                className="w-16 h-16 mx-auto mb-4 text-gray-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <p className="text-lg mb-2">No projects found</p>
-              <p className="text-sm">
-                No project data available in {sheetName}
-              </p>
+          {/* View Tabs */}
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="-mb-px flex space-x-4 sm:space-x-8">
               <button
-                onClick={handleBack}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                onClick={() => setActiveView('list')}
+                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'list'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                Back to Dashboard
+                📋 List View
               </button>
+              <button
+                onClick={() => setActiveView('calendar')}
+                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeView === 'calendar'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📅 Calendar View
+              </button>
+            </nav>
+          </div>
+
+          {/* Content based on active view - Using CSS to show/hide instead of conditional rendering */}
+          <div className="relative">
+            {/* List View */}
+            <div className={activeView === 'list' ? 'block' : 'hidden'}>
+              {projects.length > 0 ? (
+                <div className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                    {projects.map((project, index) => (
+                      <ProjectCard
+                        key={project.id || index}
+                        project={project}
+                        onClick={handleCardClick}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-6 text-center text-sm text-gray-500">
+                    Showing {projects.length} projects • Click on any card to view details
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <svg
+                    className="w-16 h-16 mx-auto mb-4 text-gray-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="text-lg mb-2">No projects found</p>
+                  <p className="text-sm">
+                    No project data available in {sheetName}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Calendar View */}
+            <div className={activeView === 'calendar' ? 'block' : 'hidden'}>
+              <PublicCalendarEmbed />
+            </div>
+          </div>
         </div>
       </div>
 
